@@ -1,0 +1,38 @@
+# ─── Table II: Global Communication and System Parameters ────────────────
+[communication]
+BETA_0    = 0.0127  # min⁻¹·°C⁻¹  baseline decay coefficient (undecane)
+T_REF     = 0.0     # °C           reference temperature offset
+C_THRESH  = 0.01    # dimensionless Michaelis-Menten detection threshold
+N_NONLIN  = 2       # trail-choice nonlinearity parameter
+P_DROP    = 0.3     # pheromone deposited per returning agent per step
+K_ATTRACT = 0.1     # unexplored-path baseline attraction weight
+B_REC     = 3       # recruitment batch size
+P_TRICKLE = 0.2     # stochastic trickle release probability
+N_ACT_MIN = 15      # trickle trigger: active agents below this threshold
+
+# ─── Grid / Simulation Constants ─────────────────────────────────────────
+[grid]
+GRID_W          = 100   # cells (each = 1 m²)
+GRID_H          = 100
+TIMESTEPS       = 720   # 12-hour foraging period (Δt=60 s → 720×60=43200 s)
+DT              = 60    # seconds per timestep
+A_DIURNAL       = 10.0  # °C  diurnal temperature amplitude
+FOOD_POS        = [50, 50]   # central food source, equidistant from all nests
+FOOD_RADIUS     = 2          # cells: contact radius around food source
+DELTA_THETA_DEG = 45.0       # ±° forward-projected candidate offset
+
+# ─── Colony Constants ────────────────────────────────────────────────────
+[colony]
+N_COLONY = 100  # agents per colony
+N_SCOUTS = 15   # scouts deployed at simulation start
+
+# ─── Monte Carlo ─────────────────────────────────────────────────────────
+[monte_carlo]
+N_MC_RUNS = 500  # runs per site
+
+# ─── Colony Nest Positions (grid cells) ──────────────────────────────────
+[nest_positions]
+P_longicornis = [10, 10]
+S_geminata    = [90, 10]
+C_diversa     = [10, 90]
+O_smaragdina  = [90, 90]

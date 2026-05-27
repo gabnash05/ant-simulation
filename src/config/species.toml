@@ -1,0 +1,44 @@
+# ─── Table I: Species Trait Parameters ────────────────────────────────────
+# CTmax, CTmin, T_opt in °C
+# v_max_mm_s in mm/s  (v_max_grid is derived at load-time: v * 60 / 1000)
+# kappa: trail persistence modifier (ordinal tier assignment)
+#   Tier 1 → ultra-low persistence (undecane)
+#   Tier 2 → low persistence (sesquiterpenes)
+#   Tier 3 → moderate persistence (alkylpyrazines)
+#   Tier 4 → high persistence (C8–C31 alkanes)
+
+[P_longicornis]
+CT_max     = 43.2
+CT_min     = 10.8
+T_opt      = 28.0
+v_max_mm_s = 63.0
+kappa      = 1.0
+color      = "#E74C3C"
+label      = "P. longicornis"
+
+[S_geminata]
+CT_max     = 44.9
+CT_min     = 3.6
+T_opt      = 31.5
+v_max_mm_s = 27.2
+kappa      = 0.25
+color      = "#F39C12"
+label      = "S. geminata"
+
+[C_diversa]
+CT_max     = 40.0
+CT_min     = 3.3
+T_opt      = 29.7
+v_max_mm_s = 22.5
+kappa      = 0.045
+color      = "#27AE60"
+label      = "C. diversa"
+
+[O_smaragdina]
+CT_max     = 43.0
+CT_min     = 4.6
+T_opt      = 27.5
+v_max_mm_s = 63.0
+kappa      = 0.0075
+color      = "#2980B9"
+label      = "O. smaragdina"

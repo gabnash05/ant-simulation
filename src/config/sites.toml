@@ -1,0 +1,121 @@
+# ─── 16 NCR Sampling Sites (Sec. F) ─────────────────────────────────────
+# name        : site identifier
+# T_base_mean : mean LST from 1 km-pixel NCR LST dataset (°C)
+# G           : green (vegetation) fraction
+# W           : water fraction
+# B           : built/impervious fraction
+#
+# Replace T_base_mean / G / W / B with actual values from the NCR LST
+# dataset [12] and the species distribution survey sites [7].
+
+[[site]]
+name        = "NCR_01"
+T_base_mean = 32.0
+G = 0.25
+W = 0.05
+B = 0.70
+
+[[site]]
+name        = "NCR_02"
+T_base_mean = 30.5
+G = 0.40
+W = 0.10
+B = 0.50
+
+[[site]]
+name        = "NCR_03"
+T_base_mean = 33.5
+G = 0.10
+W = 0.02
+B = 0.88
+
+[[site]]
+name        = "NCR_04"
+T_base_mean = 29.0
+G = 0.55
+W = 0.15
+B = 0.30
+
+[[site]]
+name        = "NCR_05"
+T_base_mean = 34.0
+G = 0.08
+W = 0.00
+B = 0.92
+
+[[site]]
+name        = "NCR_06"
+T_base_mean = 31.0
+G = 0.35
+W = 0.20
+B = 0.45
+
+[[site]]
+name        = "NCR_07"
+T_base_mean = 28.5
+G = 0.60
+W = 0.10
+B = 0.30
+
+[[site]]
+name        = "NCR_08"
+T_base_mean = 35.0
+G = 0.05
+W = 0.01
+B = 0.94
+
+[[site]]
+name        = "NCR_09"
+T_base_mean = 30.0
+G = 0.45
+W = 0.05
+B = 0.50
+
+[[site]]
+name        = "NCR_10"
+T_base_mean = 32.5
+G = 0.20
+W = 0.08
+B = 0.72
+
+[[site]]
+name        = "NCR_11"
+T_base_mean = 27.5
+G = 0.65
+W = 0.20
+B = 0.15
+
+[[site]]
+name        = "NCR_12"
+T_base_mean = 33.0
+G = 0.15
+W = 0.03
+B = 0.82
+
+[[site]]
+name        = "NCR_13"
+T_base_mean = 31.5
+G = 0.30
+W = 0.12
+B = 0.58
+
+[[site]]
+name        = "NCR_14"
+T_base_mean = 29.5
+G = 0.50
+W = 0.08
+B = 0.42
+
+[[site]]
+name        = "NCR_15"
+T_base_mean = 36.0
+G = 0.03
+W = 0.00
+B = 0.97
+
+[[site]]
+name        = "NCR_16"
+T_base_mean = 28.0
+G = 0.58
+W = 0.18
+B = 0.24
