@@ -47,3 +47,6 @@ mesa_cache/
 
 # OS generated files
 Thumbs.db
+
+# 
+.ruff_cache

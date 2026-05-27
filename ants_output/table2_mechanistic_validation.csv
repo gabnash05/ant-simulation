@@ -1,0 +1,5 @@
+Species,T_opt (°C),T_collapse,CT_max (°C),Valid
+P. longicornis,28.0,33.17,43.2,✓ PASS
+S. geminata,31.5,33.21,44.9,✓ PASS
+C. diversa,29.7,33.31,40.0,✓ PASS
+O. smaragdina,27.5,33.5,43.0,✓ PASS

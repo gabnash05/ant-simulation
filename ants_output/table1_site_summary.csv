@@ -1,0 +1,17 @@
+Site,Predicted (Ŝ),H,P(P. longicornis),P(S. geminata),P(C. diversa),P(O. smaragdina),Actual,Correct?
+NCR_01,S geminata,0.367,0.12,0.88,0.0,0.0,P_longicornis,✗
+NCR_02,S geminata,0.279,0.08,0.92,0.0,0.0,P_longicornis,✗
+NCR_03,S geminata,-0.0,0.0,1.0,0.0,0.0,P_longicornis,✗
+NCR_04,S geminata,0.471,0.18,0.82,0.0,0.0,P_longicornis,✗
+NCR_05,S geminata,-0.0,0.0,1.0,0.0,0.0,P_longicornis,✗
+NCR_06,S geminata,0.168,0.04,0.96,0.0,0.0,P_longicornis,✗
+NCR_07,P longicornis,0.551,0.76,0.24,0.0,0.0,P_longicornis,✓
+NCR_08,S geminata,-0.0,0.0,1.0,0.0,0.0,P_longicornis,✗
+NCR_09,S geminata,0.325,0.1,0.9,0.0,0.0,P_longicornis,✗
+NCR_10,S geminata,0.168,0.04,0.96,0.0,0.0,P_longicornis,✗
+NCR_11,P longicornis,0.098,0.98,0.02,0.0,0.0,P_longicornis,✓
+NCR_12,S geminata,0.098,0.02,0.98,0.0,0.0,P_longicornis,✗
+NCR_13,S geminata,0.098,0.02,0.98,0.0,0.0,P_longicornis,✗
+NCR_14,S geminata,0.279,0.08,0.92,0.0,0.0,P_longicornis,✗
+NCR_15,S geminata,-0.0,0.0,1.0,0.0,0.0,P_longicornis,✗
+NCR_16,P longicornis,0.527,0.78,0.22,0.0,0.0,P_longicornis,✓
