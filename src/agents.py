@@ -143,11 +143,13 @@ class AntAgent:
         for phi, dθ in candidates:
             tx = self.x + math.cos(self.theta + dθ)
             ty = self.y + math.sin(self.theta + dθ)
-            
-            if (abs(tx - FOOD_POS[0]) <= FOOD_RADIUS and 
-                abs(ty - FOOD_POS[1]) <= FOOD_RADIUS):
+
+            if (
+                abs(tx - FOOD_POS[0]) <= FOOD_RADIUS
+                and abs(ty - FOOD_POS[1]) <= FOOD_RADIUS
+            ):
                 return dθ
-        
+
         weights = [(K_ATTRACT + phi) ** N_NONLIN for phi, _ in candidates]
         total = sum(weights)
         probs = [w / total for w in weights]

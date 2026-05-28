@@ -2,9 +2,11 @@
 
 import math
 import tomllib
+import csv
 from pathlib import Path
 
 _CFG_DIR = Path(__file__).parent / "config"
+_DATA_DIR = Path(__file__).parent.parent / "data" / "processed"
 
 
 def _load_toml(filename: str) -> dict:
@@ -13,6 +15,9 @@ def _load_toml(filename: str) -> dict:
 
 
 def _build_species_params(raw: dict) -> dict:
+    """
+    Convert raw species parameters from species.toml into the derived values the model actually uses.
+    """
     out = {}
     for sp, vals in raw.items():
         entry = dict(vals)
@@ -21,6 +26,67 @@ def _build_species_params(raw: dict) -> dict:
         entry["_thermal_denom"] = 2.0 * sig**2
         out[sp] = entry
     return out
+
+
+def _load_sites_with_lst() -> list[dict]:
+    """
+    Merge sites.toml (name, dms) with the processed CSV (LST grid values).
+
+    The CSV is produced by src/scripts/extract_lst.py and contains one row
+    per site with columns: site_name, id, meanLST, Green_area, Waterbody,
+    Built_area, Elevation, EHcluster.
+
+    Each returned dict exposes the field names the model uses:
+        name        — site identifier (matches sites.toml)
+        dms         — original DMS string
+        T_base_mean — meanLST (°C, mean 2000-2023)
+        G           — Green_area (ha of greenery in the 1 km² cell)
+        W           — Waterbody (0/1, intersects inland water body)
+        B           — Built_area (ha of built-up land cover)
+        grid_id     — grid cell identifier
+        Elevation   — metres above sea level
+        EHcluster   — 0/1 extreme heat cluster membership
+    """
+
+    csv_path = _DATA_DIR / "sites_with_lst.csv"
+    if not csv_path.exists():
+        raise FileNotFoundError(
+            f"Processed site data not found: {csv_path}\n"
+            "Run src/scripts/extract_lst.py first."
+        )
+
+    lst_by_name: dict[str, dict] = {}
+    with open(csv_path, newline="", encoding="utf-8") as f:
+        for row in csv.DictReader(f):
+            lst_by_name[row["site_name"]] = row
+
+    toml_sites = _load_toml("sites.toml")["site"]
+    merged = []
+    for s in toml_sites:
+        name = s["name"]
+        lst = lst_by_name.get(name, {})
+        if not lst:
+            raise KeyError(
+                f"Site '{name}' found in sites.toml but missing from "
+                f"{csv_path.name}. Re-run extract_lst.py."
+            )
+        merged.append(
+            {
+                # Identity
+                "name": name,
+                "dms": s["dms"],
+                # Model inputs (mapped from grid column names)
+                "T_base_mean": float(lst["meanLST"]),
+                "G": float(lst["Green_area"]),
+                "W": float(lst["Waterbody"]),
+                "B": float(lst["Built_area"]),
+                # Additional context (available if model needs them later)
+                "grid_id": int(float(lst["id"])),
+                "Elevation": float(lst["Elevation"]),
+                "EHcluster": int(float(lst["EHcluster"])),
+            }
+        )
+    return merged
 
 
 # ── Species ────────────────────────────────────────────────────────────
@@ -61,8 +127,8 @@ N_MC_RUNS = _sim["monte_carlo"]["N_MC_RUNS"]
 
 NEST_POSITIONS = {sp: tuple(coords) for sp, coords in _sim["nest_positions"].items()}
 
-# ── Sites ──────────────────────────────────────────────────────────────
-NCR_SITES = _load_toml("sites.toml")["site"]
+# ── Sites — loaded from processed dataset, not raw TOML ───────────────
+NCR_SITES = _load_sites_with_lst()
 
 # ── Agent states ───────────────────────────────────────────────────────
 INACTIVE = 0

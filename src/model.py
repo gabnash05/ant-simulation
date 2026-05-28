@@ -112,7 +112,7 @@ class AntForagingModel:
             elapsed_since_delivery = self.step_num - self.last_delivery_step[sp]
 
             population_starved = n_active < N_ACT_MIN
-            delivery_stalled   = elapsed_since_delivery > self.t_thresh[sp]
+            delivery_stalled = elapsed_since_delivery > self.t_thresh[sp]
 
             if (population_starved or delivery_stalled) and random.random() < P_TRICKLE:
                 self.recruit(sp, 1)
