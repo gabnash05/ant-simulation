@@ -16,7 +16,7 @@ def _build_species_params(raw: dict) -> dict:
     out = {}
     for sp, vals in raw.items():
         entry = dict(vals)
-        entry["v_max_grid"] = entry["v_max_mm_s"] * 60 / 1000
+        entry["v_mean_grid"] = entry["v_mean"] * 60 / 1000
         sig = (entry["CT_max"] - entry["CT_min"]) / 6.0
         entry["_thermal_denom"] = 2.0 * sig**2
         out[sp] = entry
@@ -41,6 +41,7 @@ K_ATTRACT = _comm["K_ATTRACT"]
 B_REC = _comm["B_REC"]
 P_TRICKLE = _comm["P_TRICKLE"]
 N_ACT_MIN = _comm["N_ACT_MIN"]
+T_THRESH_SCALE = _comm["T_THRESH_SCALE"]
 
 _grid = _sim["grid"]
 GRID_W = _grid["GRID_W"]

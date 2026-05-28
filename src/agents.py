@@ -140,6 +140,14 @@ class AntAgent:
         P(k) = (K + C_k)^n / Σ_j (K + C_j)^n
         Returns the angle offset of the chosen candidate.
         """
+        for phi, dθ in candidates:
+            tx = self.x + math.cos(self.theta + dθ)
+            ty = self.y + math.sin(self.theta + dθ)
+            
+            if (abs(tx - FOOD_POS[0]) <= FOOD_RADIUS and 
+                abs(ty - FOOD_POS[1]) <= FOOD_RADIUS):
+                return dθ
+        
         weights = [(K_ATTRACT + phi) ** N_NONLIN for phi, _ in candidates]
         total = sum(weights)
         probs = [w / total for w in weights]
@@ -240,6 +248,7 @@ class AntAgent:
             self.state = SEARCHING
             self.theta = random.uniform(0.0, 2.0 * math.pi)
             self.trips += 1
+            self.model.notify_delivery(self.sp)
             # Pheromone-driven recruitment batch (Section E.4)
             self.model.recruit(self.sp, B_REC)
         else:

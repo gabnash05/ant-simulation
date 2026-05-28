@@ -1,14 +1,15 @@
 # ─── Table II: Global Communication and System Parameters ────────────────
 [communication]
-BETA_0    = 0.00231 # min⁻¹·°C⁻¹  baseline decay coefficient (undecane)
-T_REF     = 0.0     # °C           reference temperature offset
-C_THRESH  = 0.01    # dimensionless Michaelis-Menten detection threshold
-N_NONLIN  = 2       # trail-choice nonlinearity parameter
-P_DROP    = 0.3     # pheromone deposited per returning agent per step
-K_ATTRACT = 0.1     # unexplored-path baseline attraction weight
-B_REC     = 3       # recruitment batch size
-P_TRICKLE = 0.2     # stochastic trickle release probability
-N_ACT_MIN = 15      # trickle trigger: active agents below this threshold
+BETA_0    = 0.00231     # min⁻¹·°C⁻¹  baseline decay coefficient (undecane)
+T_REF     = 0.0         # °C reference temperature offset
+C_THRESH  = 0.01        # dimensionless Michaelis-Menten detection threshold
+N_NONLIN  = 2           # trail-choice nonlinearity parameter
+P_DROP    = 0.3         # pheromone deposited per returning agent per step
+K_ATTRACT = 0.1         # unexplored-path baseline attraction weight
+B_REC     = 3           # recruitment batch size
+P_TRICKLE = 0.2         # stochastic trickle release probability
+N_ACT_MIN = 15          # trickle trigger: active agents below this threshold
+T_THRESH_SCALE = 0.5    # scales down wait times so slow ants don't stall the colony
 
 # ─── Grid / Simulation Constants ─────────────────────────────────────────
 [grid]

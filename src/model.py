@@ -7,11 +7,13 @@ from config import (
     SPECIES_LIST,
     SPECIES_PARAMS,
     NEST_POSITIONS,
+    FOOD_POS,
     N_COLONY,
     N_SCOUTS,
     TIMESTEPS,
     N_ACT_MIN,
     P_TRICKLE,
+    T_THRESH_SCALE,
     INACTIVE,
     SEARCHING,
     RETURNING,
@@ -35,6 +37,22 @@ class AntForagingModel:
         # Agent lists indexed by species name
         self.agents: dict[str, list[AntAgent]] = {sp: [] for sp in SPECIES_LIST}
         self._uid = 0
+
+        self.last_delivery_step: dict[str, int] = {sp: 0 for sp in SPECIES_LIST}
+        D_avg = {
+            sp: math.hypot(
+                FOOD_POS[0] - NEST_POSITIONS[sp][0],
+                FOOD_POS[1] - NEST_POSITIONS[sp][1],
+            )
+            for sp in SPECIES_LIST
+        }
+
+        # Per-species temporal trickle threshold (timesteps), computed once
+        # from grid geometry and each species' mean velocity.
+        self.t_thresh: dict[str, float] = {
+            sp: T_THRESH_SCALE * (2.0 * D_avg[sp] * SPECIES_PARAMS[sp]["v_mean_grid"])
+            for sp in SPECIES_LIST
+        }
 
         # Initialise colonies
         for sp_idx, sp in enumerate(SPECIES_LIST):
@@ -64,16 +82,39 @@ class AntForagingModel:
                 a.theta = random.uniform(0.0, 2.0 * math.pi)
                 count += 1
 
+    def notify_delivery(self, sp: str):
+        """
+        Called by an agent the moment it completes a resource delivery
+        """
+        self.last_delivery_step[sp] = self.step_num
+
     def _trickle_release(self):
         """
-        Section E.4 — stochastic trickle: if N_active < 15, release 1
-        backup agent with P_trickle = 0.2 per timestep.
+        Section E.4 — stochastic trickle release fires for species sp when
+        EITHER of two conditions holds:
+
+          (1) Population condition:  N_active < N_ACT_MIN (15 agents).
+              Guards against deadlock when too few agents are foraging.
+
+          (2) Temporal condition:  elapsed > t_thresh_sp.
+              Guards against deadlock when agents are incapacitated before
+              trails are established and no delivery has occurred recently.
+              t_thresh is fixed per species at init time from grid geometry
+              and species v_mean_grid (see __init__).
+
+        When either condition is met, one INACTIVE agent is released with
+        probability P_trickle = 0.2 per timestep.
         """
         for sp in SPECIES_LIST:
             n_active = sum(
                 1 for a in self.agents[sp] if a.state in (SEARCHING, RETURNING)
             )
-            if n_active < N_ACT_MIN and random.random() < P_TRICKLE:
+            elapsed_since_delivery = self.step_num - self.last_delivery_step[sp]
+
+            population_starved = n_active < N_ACT_MIN
+            delivery_stalled   = elapsed_since_delivery > self.t_thresh[sp]
+
+            if (population_starved or delivery_stalled) and random.random() < P_TRICKLE:
                 self.recruit(sp, 1)
 
     # ── main simulation step ─────────────────────────────────────────────
