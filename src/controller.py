@@ -54,7 +54,7 @@ def run_visual_mode():
 
     app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
 
-    site = NCR_SITES[13]
+    site = NCR_SITES[13] # one of the more stable sites and better for visual verification
 
     T_base = np.random.normal(
         site["T_base_mean"],
@@ -376,29 +376,35 @@ def run_headless_batch(
         verbose=verbose,
     )
 
-    print("\n[Reference run] Mechanistic validation simulation…")
+    print("\n[Reference runs] Mechanistic validation simulations (one per site)…")
 
-    ref = sites[0]
+    all_ref_records: list[dict] = []
 
-    T_ref = np.random.normal(
-        ref["T_base_mean"],
-        1.5,
-        (GRID_W, GRID_H),
-    )
+    for site in sites:
 
-    sh_ref = generate_shade(
-        ref["G"],
-        ref["W"],
-        ref["B"],
-    )
+        T_ref = np.random.normal(
+            site["T_base_mean"],
+            1.5,
+            (GRID_W, GRID_H),
+        )
 
-    ref_m = AntForagingModel(
-        T_base=T_ref,
-        shade=sh_ref,
-        run_id=-1,
-    )
+        sh_ref = generate_shade(
+            site["G"],
+            site["W"],
+            site["B"],
+        )
 
-    ref_m.run(steps=TIMESTEPS)
+        ref_m = AntForagingModel(
+            T_base=T_ref,
+            shade=sh_ref,
+            run_id=-1,
+        )
+
+        ref_m.run(steps=TIMESTEPS)
+
+        all_ref_records.extend(ref_m.records)
+
+        print(f"    {site['name']}")
 
     print("\n[Figures] Generating output plots…")
 
@@ -420,7 +426,7 @@ def run_headless_batch(
     )
 
     plot_collective_order(
-        ref_m,
+        all_ref_records,
         out_dir,
     )
 

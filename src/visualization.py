@@ -19,6 +19,7 @@ from model import AntForagingModel
 # VALIDATION METRICS
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 def site_dominance(df: pd.DataFrame) -> dict:
     """
     Eq. (17): P_i = N_wins_i / N_runs
@@ -77,12 +78,17 @@ def classification_accuracy(
 # FIGURE 1 — THERMAL PERFORMANCE CURVES
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 def plot_thermal_performance_curves(out_dir: str):
+
     T_range = np.linspace(0, 50, 500)
+
     fig, ax = plt.subplots(figsize=(10, 6))
 
     for sp in SPECIES_LIST:
+
         p = SPECIES_PARAMS[sp]
+
         f_v = [thermal_multiplier(sp, T) for T in T_range]
 
         ax.plot(
@@ -144,6 +150,7 @@ def plot_thermal_performance_curves(out_dir: str):
     )
 
     plt.close()
+
     print(f"    Saved: {path}")
 
 
@@ -182,7 +189,27 @@ def plot_foraging_efficiency_distributions(
 
     axes = axes.flatten()
 
+    # ──────────────────────────────────────────────────────────────────────
+    # First pass: collect all data to determine shared y-axis maximum
+    # ──────────────────────────────────────────────────────────────────────
+
+    global_ymax = 0.0
+
+    for sp in SPECIES_LIST:
+        for site in ranked_sites:
+            vals = all_results[site][f"E_{sp}"].values
+            if len(vals) > 0:
+                global_ymax = max(global_ymax, np.max(vals))
+
+    # Add 5% headroom
+    global_ymax *= 1.05
+
+    # ──────────────────────────────────────────────────────────────────────
+    # Second pass: plot with shared y-axis
+    # ──────────────────────────────────────────────────────────────────────
+
     for idx, sp in enumerate(SPECIES_LIST):
+
         p = SPECIES_PARAMS[sp]
         ax = axes[idx]
 
@@ -232,8 +259,7 @@ def plot_foraging_efficiency_distributions(
             weight="bold",
         )
 
-        ax.set_ylim(bottom=0)
-
+        ax.set_ylim(0, global_ymax)
         ax.grid(axis="y", alpha=0.25)
 
     plt.suptitle(
@@ -257,12 +283,14 @@ def plot_foraging_efficiency_distributions(
     )
 
     plt.close()
+
     print(f"    Saved: {path}")
 
 
 # ═══════════════════════════════════════════════════════════════════════════
 # FIGURE 3 — DOMINANCE PROBABILITY HEATMAP
 # ═══════════════════════════════════════════════════════════════════════════
+
 
 def plot_dominance_heatmap(
     all_results: dict,
@@ -494,14 +522,20 @@ def plot_shannon_entropy(
 
 
 def plot_collective_order(
-    ref_model: AntForagingModel,
+    all_ref_records: list[dict],
     out_dir: str,
 ):
     """
-    Mechanistic validation figure with a single global legend.
-    """
+    Mechanistic validation figure.
 
-    collapse = ref_model.collapse_temperatures()
+    Accepts pooled per-step records from one reference run per site,
+    giving full thermal range coverage for Ω vs temperature binning.
+
+    T_collapse detection is restricted to temperatures above T_opt to
+    exclude the initialization phase (Ω is low at run-start when no
+    trails exist yet, regardless of temperature) and to enforce the
+    validity criterion: T_opt < T_collapse ≤ CT_max.
+    """
 
     fig, axes = plt.subplots(
         2,
@@ -511,57 +545,97 @@ def plot_collective_order(
 
     axes = axes.flatten()
 
+    # ──────────────────────────────────────────────────────────────────────
+    # First pass: collect all binned Ω values to determine shared y-axis
+    # ──────────────────────────────────────────────────────────────────────
+
+    all_by = []
+
+    for idx, sp in enumerate(SPECIES_LIST):
+
+        p = SPECIES_PARAMS[sp]
+
+        T_s = np.array(
+            [r.get(f"mean_T_{sp}", np.nan) for r in all_ref_records]
+        )
+
+        Om_s = np.array(
+            [r[f"omega_{sp}"] for r in all_ref_records]
+        )
+
+        N_s = np.array(
+            [r.get(f"n_active_{sp}", 0) for r in all_ref_records]
+        )
+
+        MIN_ACTIVE = max(1, round(0.10 * 100))
+
+        valid = ~np.isnan(T_s) & (N_s >= MIN_ACTIVE)
+        T_v = T_s[valid]
+        Om_v = Om_s[valid]
+
+        if len(T_v) > 10:
+
+            bins = np.linspace(T_v.min(), T_v.max(), 25)
+
+            for bi in range(len(bins) - 1):
+
+                mask = (T_v >= bins[bi]) & (T_v < bins[bi + 1])
+
+                if mask.sum() > 0:
+                    all_by.append(Om_v[mask].mean())
+
+    # Determine shared y-axis range from the pooled binned means
+    if all_by:
+        y_min_data = min(all_by)
+        y_max_data = max(all_by)
+        margin = (y_max_data - y_min_data) * 0.15 if y_max_data > y_min_data else 0.05
+        global_ymin = max(0.0, y_min_data - margin)
+        global_ymax = min(1.0, y_max_data + margin)
+    else:
+        global_ymin = 0.0
+        global_ymax = 1.0
+
+    # ──────────────────────────────────────────────────────────────────────
+    # Second pass: plot with shared y-axis
+    # ──────────────────────────────────────────────────────────────────────
+
     for idx, sp in enumerate(SPECIES_LIST):
 
         p = SPECIES_PARAMS[sp]
         ax = axes[idx]
 
         T_s = np.array(
-            [
-                r.get(f"mean_T_{sp}", np.nan)
-                for r in ref_model.records
-            ]
+            [r.get(f"mean_T_{sp}", np.nan) for r in all_ref_records]
         )
 
         Om_s = np.array(
-            [
-                r[f"omega_{sp}"]
-                for r in ref_model.records
-            ]
+            [r[f"omega_{sp}"] for r in all_ref_records]
         )
 
-        valid = ~np.isnan(T_s)
+        N_s = np.array(
+            [r.get(f"n_active_{sp}", 0) for r in all_ref_records]
+        )
+
+        MIN_ACTIVE = max(1, round(0.10 * 100))
+
+        valid = ~np.isnan(T_s) & (N_s >= MIN_ACTIVE)
         T_v = T_s[valid]
         Om_v = Om_s[valid]
 
+        bx = []
+        by = []
+
         if len(T_v) > 10:
 
-            bins = np.linspace(
-                T_v.min(),
-                T_v.max(),
-                25,
-            )
-
-            bx = []
-            by = []
+            bins = np.linspace(T_v.min(), T_v.max(), 25)
 
             for bi in range(len(bins) - 1):
 
-                mask = (
-                    (T_v >= bins[bi])
-                    &
-                    (T_v < bins[bi + 1])
-                )
+                mask = (T_v >= bins[bi]) & (T_v < bins[bi + 1])
 
                 if mask.sum() > 0:
-
-                    bx.append(
-                        (bins[bi] + bins[bi + 1]) / 2
-                    )
-
-                    by.append(
-                        Om_v[mask].mean()
-                    )
+                    bx.append((bins[bi] + bins[bi + 1]) / 2)
+                    by.append(Om_v[mask].mean())
 
             ax.plot(
                 bx,
@@ -571,7 +645,7 @@ def plot_collective_order(
                 label="Mean Ω",
             )
 
-        # Ω threshold
+        # Ω = 0.5 threshold
         ax.axhline(
             0.5,
             color="red",
@@ -599,8 +673,13 @@ def plot_collective_order(
             label="CT_max",
         )
 
-        # Collapse temperature
-        T_col = collapse.get(sp)
+        # T_collapse: first bin ABOVE T_opt where mean Ω < 0.5.
+        T_col = None
+
+        for bx_val, by_val in zip(bx, by):
+            if bx_val > p["T_opt"] and by_val < 0.5:
+                T_col = bx_val
+                break
 
         if T_col is not None:
 
@@ -624,27 +703,22 @@ def plot_collective_order(
                 f"No Collapse Detected"
             )
 
-        ax.set_title(
-            title,
-            fontsize=10,
-        )
-
+        ax.set_title(title, fontsize=10)
         ax.set_xlabel("Temperature (°C)")
         ax.set_ylabel("Collective Order Ω")
-        ax.set_ylim(0, 1.05)
+        ax.set_ylim(global_ymin, global_ymax)
         ax.grid(alpha=0.2)
 
-    # 1. GRAB HANDLES AND LABELS FROM THE LAST PLOTTED PANEL
+    # Single global legend from last panel
     handles, labels = ax.get_legend_handles_labels()
 
-    # 2. CREATE A SINGLE GLOBAL LEGEND AT THE BOTTOM
     fig.legend(
         handles,
         labels,
         loc="lower center",
-        ncol=5,
-        fontsize=10,
-        bbox_to_anchor=(0.5, -0.03)  # Positions it safely below the plots
+        ncol=6,
+        fontsize=9,
+        bbox_to_anchor=(0.5, -0.03),
     )
 
     plt.suptitle(
@@ -654,7 +728,6 @@ def plot_collective_order(
         y=1.01,
     )
 
-    # tight_layout adjusted slightly to leave breathing room for the bottom legend
     plt.tight_layout(rect=[0, 0.02, 1, 1])
 
     path = os.path.join(
@@ -662,7 +735,6 @@ def plot_collective_order(
         "fig5_collective_order_validation.png",
     )
 
-    # bbox_inches="tight" ensures the new bottom legend isn't clipped out of the saved PNG
     plt.savefig(
         path,
         dpi=250,
@@ -672,7 +744,6 @@ def plot_collective_order(
     plt.close()
 
     print(f"    Saved: {path}")
-    
 
 # ═══════════════════════════════════════════════════════════════════════════
 # TABLE 1 — SITE VALIDATION SUMMARY
