@@ -17,7 +17,7 @@ GRID_W          = 50    # cells (each = 1 m²)
 GRID_H          = 50
 TIMESTEPS       = 720   # 12-hour foraging period (Δt=60 s → 720×60=43200 s)
 DT              = 60    # seconds per timestep
-A_DIURNAL       = 10.0  # °C  diurnal temperature amplitude
+A_DIURNAL       = 20.0  # °C  diurnal temperature amplitude
 FOOD_POS        = [25, 25]   # central food source, equidistant from all nests
 FOOD_RADIUS     = 2          # cells: contact radius around food source
 DELTA_THETA_DEG = 45.0       # ±° forward-projected candidate offset

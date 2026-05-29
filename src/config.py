@@ -75,8 +75,10 @@ def _load_sites_with_lst() -> list[dict]:
                 # Identity
                 "name": name,
                 "dms": s["dms"],
+                "site_no": s["site_no"],
+                "dominant_species": s["dominant_species"],
                 # Model inputs (mapped from grid column names)
-                "T_base_mean": float(lst["meanLST"]),
+                "T_base_mean": float(lst["meanLST_2022"]),
                 "G": float(lst["Green_area"]),
                 "W": float(lst["Waterbody"]),
                 "B": float(lst["Built_area"]),

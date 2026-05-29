@@ -1,78 +1,107 @@
 # ─── 16 NCR Sampling Sites (Sec. F) ─────────────────────────────────────
-# name        : site identifier
-# T_base_mean : mean LST from 1 km-pixel NCR LST dataset (°C)
-# G           : green (vegetation) fraction
-# W           : water fraction
-# B           : built/impervious fraction
-#
-# Replace T_base_mean / G / W / B with actual values from the NCR LST
-# dataset [12] and the species distribution survey sites [7].
+# name              : site identifier
+# site_no           : site number
+# dms               : coordinates
+# dominant_species  : dominant species in site
+
 
 # ─── 16 NCR Sampling Sites ─────────────────────────────────────────────
 
 [[site]]
 name = "Mac Arthur Hiway, Val."
+site_no = 1
 dms = "14° 41' 35\" N, 120° 58' 19\" E"
+dominant_species = "S geminata"
 
 [[site]]
 name = "Bgy. 168, Deparo"
+site_no = 1
 dms = "14° 44' 20\" N, 121° 1' 3\" E"
+dominant_species = "S geminata"
 
 [[site]]
 name = "North bay blvd, Navotas"
+site_no = 1
 dms = "14° 44' 47\" N, 121° 0' 44\" E"
+dominant_species = "S geminata"
 
 [[site]]
 name = "Arroceros Park, Manila"
+site_no = 1
 dms = "14° 35' 50\" N, 121° 0' 4\" E"
+dominant_species = "S geminata"
 
 [[site]]
 name = "Mindanao Av. QC"
+site_no = 2
 dms = "14° 41' 29\" N, 121° 1' 25\" E"
+dominant_species = "S geminata"
 
 [[site]]
 name = "La Mesa Ecopark, QC"
+site_no = 2
 dms = "14° 42' 46\" N, 121° 3' 39\" E"
+dominant_species = "S geminata"
 
 [[site]]
 name = "Visayas Av. QC"
+site_no = 2
 dms = "14° 41' 28\" N, 121° 2' 24\" E"
+dominant_species = "S geminata"
 
 [[site]]
 name = "Bgy. Malanday, Marikina"
+site_no = 2
 dms = "14° 40' 20\" N, 121° 3' 24\" E"
+dominant_species = "S geminata"
 
 [[site]]
 name = "Buendia Av., Pasay City"
+site_no = 3
 dms = "14° 36' 23\" N, 120° 59' 7\" E"
+dominant_species = "P longicornis"
 
 [[site]]
 name = "Gil Puyat Av., Makati area"
+site_no = 3
 dms = "14° 33' 6\" N, 121° 1' 48\" E"
+dominant_species = "P longicornis"
 
 [[site]]
 name = "Pamplona Tres, Las pinas"
+site_no = 3
 dms = "14° 26' 47\" N, 120° 58' 24\" E"
+dominant_species = "P longicornis"
 
 [[site]]
 name = "Mla. Mem. Park, Paranaque"
+site_no = 3
 dms = "14° 27' 42\" N, 121° 1' 28\" E"
+dominant_species = "P longicornis"
 
 [[site]]
 name = "Boni Av., Mandaluyong"
+site_no = 4
 dms = "14° 34' 12\" N, 121° 1' 12\" E"
+dominant_species = "P longicornis"
 
 [[site]]
 name = "Pinagbuhatan, Pasig"
+site_no = 4
 dms = "14° 33' 0\" N, 121° 4' 12\" E"
+dominant_species = "P longicornis"
 
 [[site]]
 name = "Madrigal Bus. Park, Mun."
+site_no = 4
 dms = "14° 26' 38\" N, 121° 0' 36\" E"
+dominant_species = "P longicornis"
 
 [[site]]
 name = "Arca Circle, Western Bic."
+site_no = 4
 dms = "14° 30' 23\" N, 121° 2' 17\" E"
+dominant_species = "P longicornis"
 
 [metadata]
 crs = "EPSG:4326"

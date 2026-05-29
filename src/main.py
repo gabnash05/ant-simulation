@@ -1,8 +1,8 @@
 """
 ╔══════════════════════════════════════════════════════════════════════════╗
-║   ANTS — Thermally Constrained Pheromone-Mediated Foraging Simulation   ║
-║   Agent-Based Model (Mesa) + Monte Carlo Simulation                     ║
-║   Based on: ANTS-METHODOLOGY (NCR, Philippines)                         ║
+║   ANTS — Thermally Constrained Pheromone-Mediated Foraging Simulation    ║
+║   Agent-Based Model (Mesa) + Monte Carlo Simulation                      ║
+║   Based on: ANTS-METHODOLOGY (NCR, Philippines)                          ║
 ╚══════════════════════════════════════════════════════════════════════════╝
 
 Usage:

@@ -3,6 +3,7 @@ extract_lst.py
 --------------
 For each site in sites.toml, finds the single grid cell (polygon) that
 contains it and extracts the columns the simulation model needs.
+Additionally, merges temperature data for 2022 from an external tab file.
 
 Output: data/processed/sites_with_lst.csv  — exactly one row per site.
 
@@ -10,12 +11,15 @@ Columns in output
 -----------------
   site_name   : from sites.toml
   id          : grid cell identifier
-  meanLST     : mean LST 2000-2023  → used as T_base_mean in the model
+  meanLST     : mean LST 2000-2023  (retained for reference)
   Green_area  : greenery area (ha)  → used as G
   Waterbody   : 0/1 water flag      → used as W
   Built_area  : built-up area (ha)  → used as B
   Elevation   : metres above sea level
   EHcluster   : 0/1 extreme heat cluster membership
+  2022-* : Monthly temperature variables for 2022
+  meanLST_2022: Annual mean temperature for the 2022 study period
+                → used as T_base_mean in the model
 
 Run from the project root:
     python src/scripts/extract_lst.py
@@ -58,6 +62,8 @@ GRID_COLS = [
     "EHcluster",
 ]
 
+LST_CSV_FILENAME = "Manila_csv.tab"
+
 
 def load_sites() -> gpd.GeoDataFrame:
     with open(CONFIG_DIR / "sites.toml", "rb") as f:
@@ -80,7 +86,7 @@ def main() -> None:
     # 2. Grid shapefile — only load the columns we need, not all 26
     grid = gpd.read_file(
         DATA_RAW / "Manila.shp",
-        columns=GRID_COLS,  # geopandas 0.12+ supports column filtering
+        columns=GRID_COLS,
     )
     log.info("Grid loaded: %d polygons, CRS=%s", len(grid), grid.crs)
 
@@ -110,10 +116,51 @@ def main() -> None:
         for col in GRID_COLS:
             joined.loc[missed, col] = nearest[col].values
 
-    # 5. Keep only the columns config.py will read
-    out = joined[["site_name", "latitude", "longitude"] + GRID_COLS].reset_index(
-        drop=True
+    # 5. Extract 2022 temperatures from the TAB file and merge
+    csv_path = DATA_RAW / LST_CSV_FILENAME
+    if csv_path.exists():
+        lst_df = pd.read_csv(csv_path, sep="\t")
+
+        cols_2022 = [col for col in lst_df.columns if str(col).startswith("2022-")]
+        if not cols_2022:
+            log.error(
+                "No '2022-*' columns found in %s. Check column names.",
+                LST_CSV_FILENAME,
+            )
+
+        lst_2022 = lst_df[["id"] + cols_2022].copy()
+        lst_2022["meanLST_2022"] = lst_2022[cols_2022].mean(axis=1)
+
+        joined = joined.merge(lst_2022, on="id", how="left")
+
+        n_missing = joined["meanLST_2022"].isna().sum()
+        if n_missing:
+            log.warning(
+                "%d site(s) have no 2022 LST match — T_base_mean will be NaN.",
+                n_missing,
+            )
+
+        log.info(
+            "Merged 2022 temperature data from %s (%d monthly columns).",
+            LST_CSV_FILENAME,
+            len(cols_2022),
+        )
+    else:
+        log.error(
+            "Data file %s not found. Proceeding without 2022 data.",
+            csv_path,
+        )
+        cols_2022 = []
+        joined["meanLST_2022"] = pd.NA
+
+    # 6. Keep only the columns config.py will read (now including 2022 data)
+    final_cols = (
+        ["site_name", "latitude", "longitude"]
+        + GRID_COLS
+        + cols_2022
+        + ["meanLST_2022"]
     )
+    out = joined[final_cols].reset_index(drop=True)
 
     unmatched = out["id"].isna().sum()
     if unmatched:
@@ -126,20 +173,11 @@ def main() -> None:
     out_path = DATA_PROCESSED / "sites_with_lst.csv"
     out.to_csv(out_path, index=False)
     log.info("Saved %d rows → %s", len(out), out_path)
-    log.info(
-        "\n%s",
-        out[
-            [
-                "site_name",
-                "id",
-                "meanLST",
-                "Green_area",
-                "Waterbody",
-                "Built_area",
-                "EHcluster",
-            ]
-        ].to_string(index=False),
-    )
+
+    display_cols = [c for c in [
+        "site_name", "id", "meanLST", "meanLST_2022", "Green_area", "EHcluster",
+    ] if c in out.columns]
+    log.info("\n%s", out[display_cols].to_string(index=False))
 
 
 if __name__ == "__main__":

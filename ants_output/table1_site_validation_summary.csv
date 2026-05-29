@@ -1,0 +1,17 @@
+Site,Observed,Predicted,Entropy H,Match
+"Pamplona Tres, Las pinas",P longicornis,P longicornis,0.693,✓
+"Mac Arthur Hiway, Val.",S geminata,S geminata,0.647,✓
+"Pinagbuhatan, Pasig",P longicornis,S geminata,0.611,✗
+"La Mesa Ecopark, QC",S geminata,P longicornis,0.562,✗
+"Boni Av., Mandaluyong",P longicornis,P longicornis,0.551,✓
+"Buendia Av., Pasay City",P longicornis,P longicornis,0.386,✓
+Mindanao Av. QC,S geminata,S geminata,0.386,✓
+"Arroceros Park, Manila",S geminata,P longicornis,0.325,✗
+"Gil Puyat Av., Makati area",P longicornis,P longicornis,0.135,✓
+"Bgy. Malanday, Marikina",S geminata,P longicornis,0.135,✗
+"Bgy. 168, Deparo",S geminata,P longicornis,0.135,✗
+"North bay blvd, Navotas",S geminata,P longicornis,0.098,✗
+Visayas Av. QC,S geminata,S geminata,-0.0,✓
+"Mla. Mem. Park, Paranaque",P longicornis,P longicornis,-0.0,✓
+"Madrigal Bus. Park, Mun.",P longicornis,P longicornis,-0.0,✓
+"Arca Circle, Western Bic.",P longicornis,P longicornis,-0.0,✓

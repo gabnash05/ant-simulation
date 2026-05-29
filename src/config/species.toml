@@ -11,7 +11,7 @@
 CT_max       = 43.2
 CT_min       = 10.8
 T_opt        = 28.0
-v_mean       = 63.0
+v_mean       = 43.0
 kappa        = 1.0
 color        = "#E74C3C"
 label        = "P. longicornis"

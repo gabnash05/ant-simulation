@@ -25,9 +25,9 @@ class EnvironmentLayers:
 
     # ── Field Update Functions ────────────────────────────────────────────
     def update_temperature(self, t: int):
-        """Eq. (3): T(x,y,t) = T_base(x,y) + A_diurnal · (1 - s(x,y)) · sin(π t / 500)."""
-        factor = A_DIURNAL * (1.0 - self.shade) * math.sin(math.pi * t / TIMESTEPS)
-        self.T_field = self.T_base + factor
+        """Eq. (3): T(x,y,t) = T_base(x,y) - A_diurnal · (1 - s(x,y)) · cos(2πt / 500)."""
+        factor = A_DIURNAL * (1.0 - self.shade) * math.cos((2 * math.pi * t) / TIMESTEPS)
+        self.T_field = self.T_base - factor
 
     def update_pheromones(self):
         """

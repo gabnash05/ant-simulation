@@ -22,14 +22,12 @@ from shade import generate_shade
 from model import AntForagingModel
 from simulation import run_monte_carlo
 from visualization import (
+    plot_foraging_efficiency_distributions,
     plot_collective_order,
     plot_dominance_heatmap,
     plot_shannon_entropy,
-    plot_foraging_efficiency_boxplots,
-    plot_thermal_exposure,
     plot_thermal_performance_curves,
     generate_site_summary_table,
-    generate_mechanistic_table,
 )
 
 RUN_GUI = False  # module-level toggle; overridden by --visualize CLI flag
@@ -56,7 +54,7 @@ def run_visual_mode():
 
     app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
 
-    site = NCR_SITES[0]
+    site = NCR_SITES[13]
 
     T_base = np.random.normal(
         site["T_base_mean"],
@@ -364,16 +362,12 @@ def run_headless_batch(
     sites = NCR_SITES[:n_sites]
 
     print("\n" + "═" * 65)
-
     print("  ANTS SIMULATION — HIGH-THROUGHPUT HEADLESS BATCH MODE")
-
     print(
         f"  Sites : {len(sites)}   Runs/site : {n_runs}   "
         f"Total runs : {len(sites) * n_runs}"
     )
-
     print(f"  Output: {out_dir}/")
-
     print("═" * 65 + "\n")
 
     all_results = run_monte_carlo(
@@ -406,19 +400,17 @@ def run_headless_batch(
 
     ref_m.run(steps=TIMESTEPS)
 
-    col_temps = ref_m.collapse_temperatures()
-
     print("\n[Figures] Generating output plots…")
+
+    ground_truth = {s["name"]: s["dominant_species"] for s in sites}
 
     plot_thermal_performance_curves(out_dir)
 
-    plot_foraging_efficiency_boxplots(
-        all_results,
-        out_dir,
-    )
+    plot_foraging_efficiency_distributions(all_results, out_dir)
 
     plot_dominance_heatmap(
         all_results,
+        ground_truth,
         out_dir,
     )
 
@@ -432,24 +424,12 @@ def run_headless_batch(
         out_dir,
     )
 
-    plot_thermal_exposure(
-        all_results,
-        out_dir,
-    )
-
     print("\n[Tables] Generating output tables…")
-
-    gt_placeholder = {s["name"]: "P_longicornis" for s in sites}
 
     generate_site_summary_table(
         all_results,
-        ground_truth=gt_placeholder,
-        out_dir=out_dir,
-    )
-
-    generate_mechanistic_table(
-        col_temps,
-        out_dir=out_dir,
+        ground_truth,
+        out_dir,
     )
 
     print("\n[Export] Saving raw Monte Carlo dataset…")
