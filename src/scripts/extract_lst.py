@@ -30,6 +30,7 @@ import logging
 import tomllib
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import geopandas as gpd
 
@@ -63,6 +64,7 @@ GRID_COLS = [
 ]
 
 LST_CSV_FILENAME = "Manila_csv.tab"
+LST_MAX_VALID = 100
 
 
 def load_sites() -> gpd.GeoDataFrame:
@@ -129,6 +131,22 @@ def main() -> None:
             )
 
         lst_2022 = lst_df[["id"] + cols_2022].copy()
+
+        # ── Filter: replace values > LST_MAX_VALID with NaN ──────────
+        n_filtered = 0
+        for col in cols_2022:
+            mask = lst_2022[col] > LST_MAX_VALID
+            n_filtered += mask.sum()
+            lst_2022.loc[mask, col] = np.nan
+
+        if n_filtered:
+            log.info(
+                "Filtered %d temperature value(s) above %d°C → set to NaN.",
+                n_filtered,
+                LST_MAX_VALID,
+            )
+
+        # ── Compute mean, ignoring NaN months ────────────────────────
         lst_2022["meanLST_2022"] = lst_2022[cols_2022].mean(axis=1)
 
         joined = joined.merge(lst_2022, on="id", how="left")
@@ -136,7 +154,7 @@ def main() -> None:
         n_missing = joined["meanLST_2022"].isna().sum()
         if n_missing:
             log.warning(
-                "%d site(s) have no 2022 LST match — T_base_mean will be NaN.",
+                "%d site(s) have no valid 2022 LST data — T_base_mean will be NaN.",
                 n_missing,
             )
 

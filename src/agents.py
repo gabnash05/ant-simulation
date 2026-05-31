@@ -177,17 +177,10 @@ class AntAgent:
 
         if T_local >= p["CT_max"]:
             self.state = INCAPACITATED
-            self.steps_at_ctmax += 1
             return
 
         self.steps_active += 1
         self.chose_pheromone = False
-
-        # Thermal exposure telemetry (Eq. 16)
-        if T_local > p["T_opt"]:
-            self.steps_above_topt += 1
-        if T_local >= p["CT_max"]:
-            self.steps_at_ctmax += 1
 
         v = effective_velocity(self.sp, T_local)
         if v < 1e-9:

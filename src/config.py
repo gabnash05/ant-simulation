@@ -126,6 +126,7 @@ N_COLONY = _col["N_COLONY"]
 N_SCOUTS = _col["N_SCOUTS"]
 
 N_MC_RUNS = _sim["monte_carlo"]["N_MC_RUNS"]
+MIN_BIN_SIZE = _sim["visualization"]["MIN_BIN_SIZE"]
 
 NEST_POSITIONS = {sp: tuple(coords) for sp, coords in _sim["nest_positions"].items()}
 

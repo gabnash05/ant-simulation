@@ -135,6 +135,17 @@ class AntForagingModel:
         for a in self.all_agents:
             a.step()
 
+        # ── Thermal exposure tracking (field agents only) ───────────────
+        for a in self.all_agents:
+            if a.state == INACTIVE:
+                continue
+            T_here = self.env.get_T(int(math.floor(a.x)), int(math.floor(a.y)))
+            sp_p = SPECIES_PARAMS[a.sp]
+            if T_here >= sp_p["CT_max"]:
+                a.steps_at_ctmax += 1
+            if T_here > sp_p["T_opt"]:
+                a.steps_above_topt += 1
+
         # ── Per-step data collection ─────────────────────────────────────
         rec = {"step": t}
         for sp in SPECIES_LIST:
@@ -188,11 +199,11 @@ class AntForagingModel:
             metrics[f"Omega_{sp}"] = float(np.mean(omega_vals))
 
             # Eq. (16): τ_stress and τ_critical
-            tot_active = sum(a.steps_active for a in self.agents[sp])
             tot_stress = sum(a.steps_above_topt for a in self.agents[sp])
-            tot_crit = sum(a.steps_at_ctmax for a in self.agents[sp])
-            metrics[f"tau_stress_{sp}"] = tot_stress / tot_active if tot_active else 0.0
-            metrics[f"tau_critical_{sp}"] = tot_crit / tot_active if tot_active else 0.0
+            tot_crit   = sum(a.steps_at_ctmax   for a in self.agents[sp])
+            tot_field  = sum(a.steps_active + a.steps_at_ctmax for a in self.agents[sp])
+            metrics[f"tau_stress_{sp}"]   = tot_stress / tot_field if tot_field else 0.0
+            metrics[f"tau_critical_{sp}"] = tot_crit   / tot_field if tot_field else 0.0
 
         # Dominant species for this run
         E_vals = {sp: metrics[f"E_{sp}"] for sp in SPECIES_LIST}

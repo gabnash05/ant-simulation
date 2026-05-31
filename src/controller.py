@@ -21,19 +21,21 @@ from config import (
 from shade import generate_shade
 from model import AntForagingModel
 from simulation import run_monte_carlo
-from visualization import (
+from utils.visualization_utils import (
     plot_foraging_efficiency_distributions,
     plot_collective_order,
     plot_dominance_heatmap,
     plot_shannon_entropy,
     plot_thermal_performance_curves,
+    plot_thermal_stress_exposure,
+    compute_mean_dominance_probability,
     generate_site_summary_table,
 )
 
 RUN_GUI = False  # module-level toggle; overridden by --visualize CLI flag
 
 # ══════════════════════════════════════════════════════════════════════
-# VISUAL MODE — helpers
+# VISUAL MODE
 # ══════════════════════════════════════════════════════════════════════
 
 
@@ -414,6 +416,8 @@ def run_headless_batch(
 
     plot_foraging_efficiency_distributions(all_results, out_dir)
 
+    plot_thermal_stress_exposure(all_results, out_dir)
+
     plot_dominance_heatmap(
         all_results,
         ground_truth,
@@ -437,6 +441,30 @@ def run_headless_batch(
         ground_truth,
         out_dir,
     )
+
+    # ── Mean dominance probability for each predicted-winner species ───────
+    print("\n" + "─" * 50)
+    print("  Mean Dominance Probability  P̄ᵢ (sites where species predicted dominant)")
+    print("─" * 50)
+
+    mean_dom_probs = compute_mean_dominance_probability(all_results)
+
+    for label, prob in mean_dom_probs.items():
+        print(f"  {label:<20s} P̄ᵢ = {prob:.4f}")
+
+    # ── Mean thermal stress exposure per species ───────────────────────────
+    print("\n" + "─" * 60)
+    print("  Mean Thermal Stress Exposure  (proportion of colony-timesteps)")
+    print(f"  {'Species':<22s}  {'τ_stress (T > T_opt)':>22s}  {'τ_critical (T ≥ CT_max)':>24s}")
+    print("─" * 60)
+
+    all_runs = pd.concat(list(all_results.values()), ignore_index=True)
+
+    for sp in SPECIES_LIST:
+        label = SPECIES_PARAMS[sp]["label"]
+        mean_stress   = all_runs[f"tau_stress_{sp}"].mean()
+        mean_critical = all_runs[f"tau_critical_{sp}"].mean()
+        print(f"  {label:<22s}  {mean_stress:>22.4f}  {mean_critical:>24.4f}")
 
     print("\n[Export] Saving raw Monte Carlo dataset…")
 

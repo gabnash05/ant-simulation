@@ -31,6 +31,10 @@ N_SCOUTS = 15   # scouts deployed at simulation start
 [monte_carlo]
 N_MC_RUNS = 500  # runs per site
 
+# ─── Visualization ───────────────────────────────────────────────────────
+[visualization]
+MIN_BIN_SIZE = 20
+
 # ─── Colony Nest Positions (grid cells) ──────────────────────────────────
 [nest_positions]
 P_longicornis = [5, 5]
