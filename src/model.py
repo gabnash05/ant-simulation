@@ -24,9 +24,10 @@ from agents import AntAgent
 
 class AntForagingModel:
     """
-    Main model class.
-    Manages: execution clock, agent activation, environment updates,
-    recruitment logic, and per-step data collection.
+    Main simulation controller.
+
+    Manages execution clock, agent activation, environment updates,
+    recruitment (Section III-D.4), and per-step metric collection (Section III-G).
     """
 
     def __init__(self, T_base: np.ndarray, shade: np.ndarray, run_id: int = 0):
@@ -34,7 +35,6 @@ class AntForagingModel:
         self.step_num = 0
         self.env = EnvironmentLayers(T_base, shade)
 
-        # Agent lists indexed by species name
         self.agents: dict[str, list[AntAgent]] = {sp: [] for sp in SPECIES_LIST}
         self._uid = 0
 
@@ -54,14 +54,12 @@ class AntForagingModel:
             for sp in SPECIES_LIST
         }
 
-        # Initialise colonies
         for sp_idx, sp in enumerate(SPECIES_LIST):
             nest = NEST_POSITIONS[sp]
             for _ in range(N_COLONY):
                 a = AntAgent(self._uid, sp, sp_idx, nest, self)
                 self.agents[sp].append(a)
                 self._uid += 1
-            # Activate initial scouts
             for a in self.agents[sp][:N_SCOUTS]:
                 a.state = SEARCHING
                 a.theta = random.uniform(0.0, 2.0 * math.pi)
@@ -69,10 +67,16 @@ class AntForagingModel:
         self.all_agents = [a for sp in SPECIES_LIST for a in self.agents[sp]]
         self.records: list[dict] = []
 
-    # ── recruitment ──────────────────────────────────────────────────────
+    # ═════════════════════════════════════════════════════════════
+    # Recruitment
+    # ═════════════════════════════════════════════════════════════
 
     def recruit(self, sp: str, n: int):
-        """Activate up to n INACTIVE agents from species sp."""
+        """
+        Section III-D.4 — Batch Recruitment
+
+        Activates up to n INACTIVE agents (B_rec = 3 on food delivery).
+        """
         count = 0
         for a in self.agents[sp]:
             if count >= n:
@@ -83,27 +87,15 @@ class AntForagingModel:
                 count += 1
 
     def notify_delivery(self, sp: str):
-        """
-        Called by an agent the moment it completes a resource delivery
-        """
+        """Record timestep of most recent food delivery for species sp."""
         self.last_delivery_step[sp] = self.step_num
 
     def _trickle_release(self):
         """
-        Section E.4 — stochastic trickle release fires for species sp when
-        EITHER of two conditions holds:
+        Section III-D.4 — Stochastic Trickle Recruitment
 
-          (1) Population condition:  N_active < N_ACT_MIN (15 agents).
-              Guards against deadlock when too few agents are foraging.
-
-          (2) Temporal condition:  elapsed > t_thresh_sp.
-              Guards against deadlock when agents are incapacitated before
-              trails are established and no delivery has occurred recently.
-              t_thresh is fixed per species at init time from grid geometry
-              and species v_mean_grid (see __init__).
-
-        When either condition is met, one INACTIVE agent is released with
-        probability P_trickle = 0.2 per timestep.
+        Deploys one INACTIVE agent with P_trickle = 0.2 when N_active < 15
+        or elapsed since delivery exceeds species-specific t_thresh.
         """
         for sp in SPECIES_LIST:
             n_active = sum(
@@ -117,25 +109,25 @@ class AntForagingModel:
             if (population_starved or delivery_stalled) and random.random() < P_TRICKLE:
                 self.recruit(sp, 1)
 
-    # ── main simulation step ─────────────────────────────────────────────
+    # ═════════════════════════════════════════════════════════════
+    # Main Simulation Step
+    # ═════════════════════════════════════════════════════════════
 
     def step(self):
+        """Advance one timestep: environment, recruitment, agents, and metrics."""
         self.step_num += 1
         t = self.step_num
 
-        # Environment updates
         self.env.update_temperature(t)
         self.env.update_pheromones()
 
-        # Trickle release check
         self._trickle_release()
 
-        # Activate and shuffle all agents
         random.shuffle(self.all_agents)
         for a in self.all_agents:
             a.step()
 
-        # ── Thermal exposure tracking (field agents only) ───────────────
+        # Thermal exposure tracking (Eq. 19 numerators)
         for a in self.all_agents:
             if a.state == INACTIVE:
                 continue
@@ -146,7 +138,6 @@ class AntForagingModel:
             if T_here > sp_p["T_opt"]:
                 a.steps_above_topt += 1
 
-        # ── Per-step data collection ─────────────────────────────────────
         rec = {"step": t}
         for sp in SPECIES_LIST:
             active = [a for a in self.agents[sp] if a.state in (SEARCHING, RETURNING)]
@@ -154,12 +145,13 @@ class AntForagingModel:
             n_a = len(active)
             n_t = len(trail)
 
-            # Eq. (15): Ω = N_trail / N_active
+            # Eq. (18): Ω = N_trail / N_active
             omega = n_t / n_a if n_a > 0 else 0.0
             rec[f"n_active_{sp}"] = n_a
             rec[f"omega_{sp}"] = omega
 
             total_trips = sum(a.trips for a in self.agents[sp])
+            # Eq. (17): E_i = N_trips,i / N_colony,i
             rec[f"E_{sp}"] = total_trips / N_COLONY
 
             if active:
@@ -180,42 +172,47 @@ class AntForagingModel:
         for _ in range(steps):
             self.step()
 
-    # ── per-run aggregate metrics ────────────────────────────────────────
+    # ═════════════════════════════════════════════════════════════
+    # Per-run Aggregate Metrics
+    # ═════════════════════════════════════════════════════════════
 
     def compute_run_metrics(self) -> dict:
         """
-        Returns dict of per-species Ei, Ω, τ_stress, τ_critical,
-        plus the run-level dominant species (Eq. 14–16).
+        Section III-G — Output Metrics
+
+        Per-species E_i (Eq. 17), Ω (Eq. 18), τ_stress and τ_critical (Eq. 19),
+        plus run-level dominant species by max E_i.
         """
         metrics = {}
         for sp in SPECIES_LIST:
-            # Eq. (14): E_i = N_trips,i / N_colony,i
             total_trips = sum(a.trips for a in self.agents[sp])
+            # Eq. (17): E_i = N_trips,i / N_colony,i
             E_i = total_trips / N_COLONY
             metrics[f"E_{sp}"] = E_i
 
-            # Eq. (15): Ω mean across timesteps
             omega_vals = [r[f"omega_{sp}"] for r in self.records]
             metrics[f"Omega_{sp}"] = float(np.mean(omega_vals))
 
-            # Eq. (16): τ_stress and τ_critical
+            # Eq. (19): τ_stress = t(T>T_opt)/t_total, τ_critical = t(T≥CT_max)/t_total
             tot_stress = sum(a.steps_above_topt for a in self.agents[sp])
-            tot_crit   = sum(a.steps_at_ctmax   for a in self.agents[sp])
-            tot_field  = sum(a.steps_active + a.steps_at_ctmax for a in self.agents[sp])
-            metrics[f"tau_stress_{sp}"]   = tot_stress / tot_field if tot_field else 0.0
-            metrics[f"tau_critical_{sp}"] = tot_crit   / tot_field if tot_field else 0.0
+            tot_crit = sum(a.steps_at_ctmax for a in self.agents[sp])
+            tot_field = sum(a.steps_active + a.steps_at_ctmax for a in self.agents[sp])
+            metrics[f"tau_stress_{sp}"] = tot_stress / tot_field if tot_field else 0.0
+            metrics[f"tau_critical_{sp}"] = tot_crit / tot_field if tot_field else 0.0
 
-        # Dominant species for this run
         E_vals = {sp: metrics[f"E_{sp}"] for sp in SPECIES_LIST}
         metrics["dominant"] = max(E_vals, key=E_vals.get)
         return metrics
 
-    # ── mechanistic validation helper ────────────────────────────────────
+    # ═════════════════════════════════════════════════════════════
+    # Mechanistic Validation
+    # ═════════════════════════════════════════════════════════════
 
     def collapse_temperatures(self) -> dict:
         """
-        For each species, find T_collapse: mean temperature during the first
-        window of ≥50 consecutive timesteps where Ω < 0.5.
+        Mechanistic validation helper.
+
+        T_collapse: mean temperature during first ≥50 consecutive timesteps with Ω < 0.5.
         Validity criterion: T_opt < T_collapse ≤ CT_max.
         """
         result = {}

@@ -24,10 +24,10 @@ from thermal import effective_velocity
 
 class AntAgent:
     """
-    Off-lattice ant agent.
-    • Continuous (x, y) coordinates; floor-mapped to discrete grid cells.
-    • State machine: INACTIVE → SEARCHING → RETURNING → (loop)
-    • Incapacitated when local T ≥ CT_max (Eq. 8).
+    Section III-D.1 — Off-lattice ant agent
+
+    Continuous (x, y) coordinates; state machine INACTIVE → SEARCHING → RETURNING.
+    Incapacitated when local T ≥ CT_max (Eq. 7).
     """
 
     __slots__ = [
@@ -63,7 +63,7 @@ class AntAgent:
         self.theta = random.uniform(0.0, 2.0 * math.pi)
         self.state = INACTIVE
 
-        # Telemetry accumulators
+        # Telemetry accumulators (Eq. 19 exposure denominators)
         self.trips = 0
         self.steps_active = 0
         self.steps_above_topt = 0
@@ -72,17 +72,21 @@ class AntAgent:
         self.chose_pheromone = False
         self.trail_detected = False
 
-    # ── helpers ──────────────────────────────────────────────────────────
+    # ═════════════════════════════════════════════════════════════
+    # Helpers
+    # ═════════════════════════════════════════════════════════════
 
     def _cell(self):
+        """Floor-map continuous position to discrete grid cell."""
         return int(math.floor(self.x)), int(math.floor(self.y))
 
     def _local_T(self) -> float:
+        """Local temperature at the agent's current cell."""
         cx, cy = self._cell()
         return self.model.env.get_T(cx, cy)
 
     def _reflect(self, nx: float, ny: float) -> tuple:
-        """Wall reflection: reverse the affected heading component."""
+        """Reflect position and heading at grid boundaries."""
         if 0 <= nx < GRID_W and 0 <= ny < GRID_H:
             return nx, ny
 
@@ -101,10 +105,17 @@ class AntAgent:
 
         return nx, ny
 
-    # ── forward-projected pheromone sensing ──────────────────────────────
+    # ═════════════════════════════════════════════════════════════
+    # Forward-projected Pheromone Sensing
+    # ═════════════════════════════════════════════════════════════
 
     def _sense_candidates(self, v: float) -> list:
-        """Returns list of (phi, dtheta) for left, center, right candidates for pheromone sensing."""
+        """
+        Eq. (10): R_sense = v_i(T)
+        Eq. (11): x_k = x + R_sense cos(θ+φ_k), y_k = y + R_sense sin(θ+φ_k)
+
+        Returns (φ, Δθ) tuples for left, center, and right sensing candidates.
+        """
         cos_t = math.cos(self.theta)
         sin_t = math.sin(self.theta)
 
@@ -133,12 +144,11 @@ class AntAgent:
 
         return [(phi_l, -DELTA_THETA), (phi_c, 0.0), (phi_r, DELTA_THETA)]
 
-    # ── Eq. (11): stochastic trail selection ─────────────────────────────
-
     def _stochastic_choice(self, candidates: list) -> float:
         """
-        P(k) = (K + C_k)^n / Σ_j (K + C_j)^n
-        Returns the angle offset of the chosen candidate.
+        Eq. (12): P(k) = (K + C_k)^n / Σ_j (K + C_j)^n
+
+        Stochastic trail-branch selection; returns chosen heading offset Δθ.
         """
         for phi, dθ in candidates:
             tx = self.x + math.cos(self.theta + dθ)
@@ -160,9 +170,16 @@ class AntAgent:
                 return dθ
         return candidates[-1][1]
 
-    # ── main per-timestep step ────────────────────────────────────────────
+    # ═════════════════════════════════════════════════════════════
+    # Per-timestep Update
+    # ═════════════════════════════════════════════════════════════
 
     def step(self):
+        """
+        Section III-D.1 — Agent timestep
+
+        Applies thermal incapacitation (Eq. 7) and dispatches SEARCHING or RETURNING behavior.
+        """
         if self.state == INACTIVE:
             return
 
@@ -175,6 +192,7 @@ class AntAgent:
             else:
                 return
 
+        # Eq. (7): T(x,y) ≥ CT_max → incapacitated
         if T_local >= p["CT_max"]:
             self.state = INCAPACITATED
             return
@@ -191,12 +209,20 @@ class AntAgent:
         elif self.state == RETURNING:
             self._return_step(v)
 
-    # ── SEARCHING behavior ───────────────────────────────────────────────
+    # ═════════════════════════════════════════════════════════════
+    # SEARCHING Behavior
+    # ═════════════════════════════════════════════════════════════
 
     def _search_step(self, v: float):
+        """
+        Section III-D.2–D.3 — Searching, detection, and trail selection
+
+        Eq. (8) trail detection, Eq. (12) branch choice, Eq. (13) heading update, Eq. (6) movement.
+        """
         candidates = self._sense_candidates(v)
 
         max_phi = max(c[0] for c in candidates)
+        # Eq. (8): P_detect = C / (C + C_thresh)
         P_detect = max_phi / (max_phi + C_THRESH)
 
         self.trail_detected = P_detect > 0.5
@@ -209,8 +235,10 @@ class AntAgent:
             dtheta = random.choice((-DELTA_THETA, 0.0, DELTA_THETA))
             dtheta += random.gauss(0.0, math.radians(8.0))
 
+        # Eq. (13): θ(t+1) = θ(t) + φ_selected
         self.theta += dtheta
 
+        # Eq. (6): x(t+1) = x(t) + v(T) cos θ, y(t+1) = y(t) + v(T) sin θ
         nx = self.x + v * math.cos(self.theta)
         ny = self.y + v * math.sin(self.theta)
 
@@ -225,26 +253,30 @@ class AntAgent:
             self.state = RETURNING
             self.theta = math.atan2(self.nest_y - self.y, self.nest_x - self.x)
 
-    # ── RETURNING behavior ───────────────────────────────────────────────
+    # ═════════════════════════════════════════════════════════════
+    # RETURNING Behavior
+    # ═════════════════════════════════════════════════════════════
 
     def _return_step(self, v: float):
-        # Eq. (10): pheromone deposition
+        """
+        Section III-D.2 — Returning with pheromone deposition
+
+        Eq. (9) deposition and Eq. (6) directed movement toward nest.
+        """
         cx, cy = self._cell()
         self.model.env.deposit_phi(self.sp_idx, cx, cy, P_DROP)
 
-        # Directed movement toward nest
         dx = self.nest_x - self.x
         dy = self.nest_y - self.y
         dist = math.hypot(dx, dy)
 
         if dist <= v:
-            # Arrived at nest
             self.x, self.y = self.nest_x, self.nest_y
             self.state = SEARCHING
             self.theta = random.uniform(0.0, 2.0 * math.pi)
             self.trips += 1
             self.model.notify_delivery(self.sp)
-            # Pheromone-driven recruitment batch (Section E.4)
+            # Section III-D.4 — batch recruitment (B_rec = 3)
             self.model.recruit(self.sp, B_REC)
         else:
             self.theta = math.atan2(dy, dx)

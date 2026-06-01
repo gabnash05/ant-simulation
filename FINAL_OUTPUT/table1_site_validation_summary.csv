@@ -1,0 +1,17 @@
+Site No.,Site,Temp (°C),Observed,Predicted,Entropy H,Match
+1,"Mac Arthur Hiway, Val.",58.0,S geminata,S geminata,0.678,✓
+15,"Madrigal Bus. Park, Mun.",48.2,P longicornis,P longicornis,0.677,✓
+16,"Arca Circle, Western Bic.",48.2,P longicornis,P longicornis,0.677,✓
+11,"Pamplona Tres, Las pinas",48.2,P longicornis,P longicornis,0.672,✓
+6,"La Mesa Ecopark, QC",47.8,S geminata,P longicornis,0.662,✗
+13,"Boni Av., Mandaluyong",47.4,P longicornis,P longicornis,0.619,✓
+14,"Pinagbuhatan, Pasig",49.9,P longicornis,S geminata,0.577,✗
+12,"Mla. Mem. Park, Paranaque",47.1,P longicornis,P longicornis,0.573,✓
+4,"Arroceros Park, Manila",46.3,S geminata,P longicornis,0.367,✗
+9,"Buendia Av., Pasay City",45.9,P longicornis,P longicornis,0.36,✓
+5,Mindanao Av. QC,51.0,S geminata,S geminata,0.245,✓
+10,"Gil Puyat Av., Makati area",44.8,P longicornis,P longicornis,0.218,✓
+8,"Bgy. Malanday, Marikina",42.8,S geminata,P longicornis,0.157,✗
+2,"Bgy. 168, Deparo",44.0,S geminata,P longicornis,0.146,✗
+3,"North bay blvd, Navotas",42.9,S geminata,P longicornis,0.135,✗
+7,Visayas Av. QC,52.8,S geminata,S geminata,0.022,✓

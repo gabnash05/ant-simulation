@@ -10,18 +10,22 @@ _DATA_DIR = Path(__file__).parent.parent / "data" / "processed"
 
 
 def _load_toml(filename: str) -> dict:
+    """Load a TOML file from src/config/."""
     with open(_CFG_DIR / filename, "rb") as _f:
         return tomllib.load(_f)
 
 
 def _build_species_params(raw: dict) -> dict:
     """
-    Convert raw species parameters from species.toml into the derived values the model actually uses.
+    Section III-D.1 — Species parameter derivation
+
+    Converts species.toml entries into grid velocity and Gaussian width used by thermal.py.
     """
     out = {}
     for sp, vals in raw.items():
         entry = dict(vals)
         entry["v_mean_grid"] = entry["v_mean"] * 60 / 1000
+        # Eq. (5): σ_i = (CT_max − CT_min) / 6
         sig = (entry["CT_max"] - entry["CT_min"]) / 6.0
         entry["_thermal_denom"] = 2.0 * sig**2
         out[sp] = entry
@@ -30,6 +34,8 @@ def _build_species_params(raw: dict) -> dict:
 
 def _load_sites_with_lst() -> list[dict]:
     """
+    Section III-C — Site configuration loader
+
     Merge sites.toml (name, dms) with the processed CSV (LST grid values).
 
     The CSV is produced by src/scripts/extract_lst.py and contains one row
@@ -91,12 +97,16 @@ def _load_sites_with_lst() -> list[dict]:
     return merged
 
 
-# ── Species ────────────────────────────────────────────────────────────
+# ═════════════════════════════════════════════════════════════
+# Species
+# ═════════════════════════════════════════════════════════════
 SPECIES_PARAMS = _build_species_params(_load_toml("species.toml"))
 SPECIES_LIST = list(SPECIES_PARAMS.keys())
 SPECIES_INDEX = {sp: i for i, sp in enumerate(SPECIES_LIST)}
 
-# ── Simulation ─────────────────────────────────────────────────────────
+# ═════════════════════════════════════════════════════════════
+# Simulation
+# ═════════════════════════════════════════════════════════════
 _sim = _load_toml("simulation.toml")
 
 _comm = _sim["communication"]
@@ -130,10 +140,14 @@ MIN_BIN_SIZE = _sim["visualization"]["MIN_BIN_SIZE"]
 
 NEST_POSITIONS = {sp: tuple(coords) for sp, coords in _sim["nest_positions"].items()}
 
-# ── Sites — loaded from processed dataset, not raw TOML ───────────────
+# ═════════════════════════════════════════════════════════════
+# Sites (processed LST dataset)
+# ═════════════════════════════════════════════════════════════
 NCR_SITES = _load_sites_with_lst()
 
-# ── Agent states ───────────────────────────────────────────────────────
+# ═════════════════════════════════════════════════════════════
+# Agent States
+# ═════════════════════════════════════════════════════════════
 INACTIVE = 0
 SEARCHING = 1
 RETURNING = 2

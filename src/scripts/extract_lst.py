@@ -68,6 +68,7 @@ LST_MAX_VALID = 100
 
 
 def load_sites() -> gpd.GeoDataFrame:
+    """Load NCR site coordinates from sites.toml as a GeoDataFrame (EPSG:4326)."""
     with open(CONFIG_DIR / "sites.toml", "rb") as f:
         config = tomllib.load(f)
     records = []
@@ -81,6 +82,11 @@ def load_sites() -> gpd.GeoDataFrame:
 
 
 def main() -> None:
+    """
+    Section III-C — LST and land-cover extraction pipeline
+
+    Joins sites to Manila grid cells and writes data/processed/sites_with_lst.csv.
+    """
     # 1. Sites from TOML
     sites = load_sites()
     log.info("Sites loaded: %d", len(sites))
@@ -192,9 +198,18 @@ def main() -> None:
     out.to_csv(out_path, index=False)
     log.info("Saved %d rows → %s", len(out), out_path)
 
-    display_cols = [c for c in [
-        "site_name", "id", "meanLST", "meanLST_2022", "Green_area", "EHcluster",
-    ] if c in out.columns]
+    display_cols = [
+        c
+        for c in [
+            "site_name",
+            "id",
+            "meanLST",
+            "meanLST_2022",
+            "Green_area",
+            "EHcluster",
+        ]
+        if c in out.columns
+    ]
     log.info("\n%s", out[display_cols].to_string(index=False))
 
 

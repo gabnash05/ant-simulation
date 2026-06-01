@@ -41,9 +41,9 @@ RUN_GUI = False  # module-level toggle; overridden by --visualize CLI flag
 
 def run_visual_mode():
     """
-    Visual Verification Mode.
-    Clean PyQtGraph implementation.
-    Tracks and displays Foraging Efficiency (E_i) over time.
+    Interactive visual verification (PyQtGraph).
+
+    Single-site run with live agent map, pheromone field, and E_i(t) (Eq. 17).
     """
 
     print("\n[VISUAL MODE] Launching interactive visualization…")
@@ -56,7 +56,9 @@ def run_visual_mode():
 
     app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
 
-    site = NCR_SITES[13] # one of the more stable sites and better for visual verification
+    site = NCR_SITES[
+        13
+    ]  # one of the more stable sites and better for visual verification
 
     T_base = np.random.normal(
         site["T_base_mean"],
@@ -351,9 +353,9 @@ def run_headless_batch(
     verbose: bool = True,
 ):
     """
-    High-Throughput Batch Mode.
-    Executes the full Monte Carlo, generates all validation figures and tables,
-    and exports raw data to CSV.
+    Headless Monte Carlo batch mode
+
+    Runs simulation across NCR sites, writes figures, validation table, and CSV export.
     """
 
     import os
@@ -383,7 +385,6 @@ def run_headless_batch(
     all_ref_records: list[dict] = []
 
     for site in sites:
-
         T_ref = np.random.normal(
             site["T_base_mean"],
             1.5,
@@ -455,14 +456,16 @@ def run_headless_batch(
     # ── Mean thermal stress exposure per species ───────────────────────────
     print("\n" + "─" * 60)
     print("  Mean Thermal Stress Exposure  (proportion of colony-timesteps)")
-    print(f"  {'Species':<22s}  {'τ_stress (T > T_opt)':>22s}  {'τ_critical (T ≥ CT_max)':>24s}")
+    print(
+        f"  {'Species':<22s}  {'τ_stress (T > T_opt)':>22s}  {'τ_critical (T ≥ CT_max)':>24s}"
+    )
     print("─" * 60)
 
     all_runs = pd.concat(list(all_results.values()), ignore_index=True)
 
     for sp in SPECIES_LIST:
         label = SPECIES_PARAMS[sp]["label"]
-        mean_stress   = all_runs[f"tau_stress_{sp}"].mean()
+        mean_stress = all_runs[f"tau_stress_{sp}"].mean()
         mean_critical = all_runs[f"tau_critical_{sp}"].mean()
         print(f"  {label:<22s}  {mean_stress:>22.4f}  {mean_critical:>24.4f}")
 

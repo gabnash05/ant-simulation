@@ -1,15 +1,7 @@
 """
-╔══════════════════════════════════════════════════════════════════════════╗
-║   ANTS — Thermally Constrained Pheromone-Mediated Foraging Simulation    ║
-║   Agent-Based Model (Mesa) + Monte Carlo Simulation                      ║
-║   Based on: ANTS-METHODOLOGY (NCR, Philippines)                          ║
-╚══════════════════════════════════════════════════════════════════════════╝
+ANTS — Thermally Constrained Pheromone-Mediated Foraging Simulation
 
-Usage:
-    python ants_simulation.py                     # headless batch (500 runs × 16 sites)
-    python ants_simulation.py --visualize          # interactive matplotlib animation
-    python ants_simulation.py --runs 50 --out out  # quick test run
-    python ants_simulation.py --sites 2 --runs 10  # two sites, 10 runs each
+CLI entry point for headless Monte Carlo batch and interactive visual mode.
 """
 
 import argparse

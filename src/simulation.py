@@ -7,14 +7,20 @@ from shade import generate_shade
 from model import AntForagingModel
 
 
+# ═════════════════════════════════════════════════════════════
+# Monte Carlo Runner
+# ═════════════════════════════════════════════════════════════
+
+
 def run_monte_carlo(
     sites: list = None,
     n_runs: int = N_MC_RUNS,
     verbose: bool = True,
 ) -> dict[str, pd.DataFrame]:
     """
-    Execute the full Monte Carlo simulation across all NCR sites.
-    Returns {site_name: DataFrame of per-run metrics}.
+    Section III-G — Monte Carlo simulation runner
+
+    Executes N_MC_RUNS per NCR site; returns per-site DataFrames of run metrics.
     """
     if sites is None:
         sites = NCR_SITES

@@ -21,6 +21,7 @@ from model import AntForagingModel
 # SITE ORDERING HELPERS
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 def _build_site_temp_index() -> dict[str, dict]:
     """
     Returns a dict keyed by site name with 'toml_idx' (1-based position in
@@ -33,6 +34,7 @@ def _build_site_temp_index() -> dict[str, dict]:
         for i, s in enumerate(NCR_SITES)
     }
 
+
 def _temp_sorted_sites(site_names) -> list[str]:
     """
     Sort a collection of site names by T_base_mean descending
@@ -44,6 +46,7 @@ def _temp_sorted_sites(site_names) -> list[str]:
         key=lambda s: idx.get(s, {}).get("T", 0.0),
         reverse=True,
     )
+
 
 def _site_axis_label(site_name: str) -> str:
     """
@@ -62,29 +65,23 @@ def _site_axis_label(site_name: str) -> str:
 # VALIDATION METRICS
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 def site_dominance(df: pd.DataFrame) -> dict:
     """
-    Eq. (17): P_i = N_wins_i / N_runs
-    Eq. (18): Ŝ = argmax P_i
-    Eq. (20): H = −Σ P_i ln P_i
+    Section III-G — Site-level dominance summary
+
+    Eq. (20) P_i, Eq. (21) Ŝ = argmax P_i, Eq. (23) Shannon entropy H.
     """
 
     n = len(df)
 
     cnt = df["dominant"].value_counts()
 
-    P_i = {
-        sp: cnt.get(sp, 0) / n
-        for sp in SPECIES_LIST
-    }
+    P_i = {sp: cnt.get(sp, 0) / n for sp in SPECIES_LIST}
 
     S_hat = max(P_i, key=P_i.get)
 
-    H = -sum(
-        p * math.log(p)
-        for p in P_i.values()
-        if p > 1e-12
-    )
+    H = -sum(p * math.log(p) for p in P_i.values() if p > 1e-12)
 
     return {
         "P_i": P_i,
@@ -92,12 +89,15 @@ def site_dominance(df: pd.DataFrame) -> dict:
         "H": H,
     }
 
+
 def classification_accuracy(
     site_dominance_dict: dict[str, dict],
     ground_truth: dict[str, str],
 ) -> float:
     """
-    Eq. (19): Accuracy = N_correct / N_sites
+    Eq. (22): Accuracy = N_correct / N_sites
+
+    Fraction of sites where predicted dominant species matches observation.
     """
 
     print()
@@ -108,25 +108,23 @@ def classification_accuracy(
         if ground_truth.get(site).replace("_", " ") == dom["S_hat"].replace("_", " ")
     )
 
-    return (
-        n_correct / len(site_dominance_dict)
-        if site_dominance_dict
-        else 0.0
-    )
+    return n_correct / len(site_dominance_dict) if site_dominance_dict else 0.0
 
 
 # ═══════════════════════════════════════════════════════════════════════════
 # FIGURE 1 — THERMAL PERFORMANCE CURVES
 # ═══════════════════════════════════════════════════════════════════════════
 
-def plot_thermal_performance_curves(out_dir: str):
 
+def plot_thermal_performance_curves(out_dir: str):
+    """
+    Section III-D.1 — Thermal performance curves (Eq. 4) for all species.
+    """
     T_range = np.linspace(0, 50, 500)
 
     fig, ax = plt.subplots(figsize=(10, 6))
 
     for sp in SPECIES_LIST:
-
         p = SPECIES_PARAMS[sp]
 
         f_v = [thermal_multiplier(sp, T) for T in T_range]
@@ -198,16 +196,15 @@ def plot_thermal_performance_curves(out_dir: str):
 # FIGURE 2 — FORAGING EFFICIENCY DISTRIBUTIONS
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 def plot_foraging_efficiency_distributions(
     all_results: dict,
     out_dir: str,
 ):
     """
-    Fig. 5 — Per-species foraging efficiency (Eq. 14) distributions
-    across all NCR sites.
+    Eq. (17) — Per-species foraging efficiency distributions across NCR sites.
 
-    Sites are sorted by descending T_base_mean (highest LST first),
-    consistent with the ordering used in Figs. 2, 3, and 4.
+    Sites sorted by descending T_base_mean (highest LST first).
     """
 
     # ──────────────────────────────────────────────────────────────────────
@@ -244,14 +241,10 @@ def plot_foraging_efficiency_distributions(
     # ──────────────────────────────────────────────────────────────────────
 
     for idx, sp in enumerate(SPECIES_LIST):
-
         p = SPECIES_PARAMS[sp]
         ax = axes[idx]
 
-        data = [
-            all_results[site][f"E_{sp}"].values
-            for site in ranked_sites
-        ]
+        data = [all_results[site][f"E_{sp}"].values for site in ranked_sites]
 
         bp = ax.boxplot(
             data,
@@ -321,13 +314,10 @@ def plot_foraging_efficiency_distributions(
 
     print(f"    Saved: {path}")
 
+
 def compute_mean_foraging_efficiency(all_results: dict) -> dict:
     """
-    Returns mean E_i across all sites and records for each species.
-
-    Returns
-    -------
-    dict : {species_label: mean_efficiency}
+    Eq. (17) — Mean foraging efficiency E_i pooled across sites and Monte Carlo runs.
     """
     means = {}
 
@@ -348,6 +338,7 @@ def compute_mean_foraging_efficiency(all_results: dict) -> dict:
 # FIGURE 3 — THERMAL STRESS EXPOSURE
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 def plot_thermal_stress_exposure(
     all_results: dict,
     out_dir: str,
@@ -356,46 +347,46 @@ def plot_thermal_stress_exposure(
     Fig. 3 — Mean proportion of simulation timesteps spent above thermal
     thresholds for each species, pooled across all NCR sites and Monte
     Carlo runs.
- 
-    Two metrics per species (Eq. 17):
-        stress_i   = t(T > T_opt)  / t_total
-        critical_i = t(T >= CT_max) / t_total
+
+    Eq. (19): τ_stress = t(T>T_opt)/t_total, τ_critical = t(T≥CT_max)/t_total per species.
     """
- 
+
     # ── collect per-species stress and critical arrays ─────────────────────
     stress_means, stress_sds = [], []
     critical_means, critical_sds = [], []
     species_labels = []
- 
+
     for sp in SPECIES_LIST:
         p = SPECIES_PARAMS[sp]
         stress_vals, critical_vals = [], []
- 
+
         for site_df in all_results.values():
             s_col = f"tau_stress_{sp}"
             c_col = f"tau_critical_{sp}"
- 
+
             if s_col in site_df.columns:
                 stress_vals.extend(site_df[s_col].dropna().tolist())
             if c_col in site_df.columns:
                 critical_vals.extend(site_df[c_col].dropna().tolist())
- 
+
         stress_means.append(np.mean(stress_vals) if stress_vals else 0.0)
         stress_sds.append(np.std(stress_vals, ddof=1) if len(stress_vals) > 1 else 0.0)
         critical_means.append(np.mean(critical_vals) if critical_vals else 0.0)
-        critical_sds.append(np.std(critical_vals, ddof=1) if len(critical_vals) > 1 else 0.0)
+        critical_sds.append(
+            np.std(critical_vals, ddof=1) if len(critical_vals) > 1 else 0.0
+        )
         species_labels.append(p["label"])
- 
+
     n_sp = len(SPECIES_LIST)
     x = np.arange(n_sp)
     width = 0.35
- 
+
     # IEEE grayscale palette ──────────────────────────────────────────────
-    DARK_GRAY  = "#4d4d4d"
+    DARK_GRAY = "#4d4d4d"
     LIGHT_GRAY = "#b3b3b3"
- 
+
     fig, ax = plt.subplots(figsize=(10, 6))
- 
+
     bars_stress = ax.bar(
         x - width / 2,
         stress_means,
@@ -408,7 +399,7 @@ def plot_thermal_stress_exposure(
         capsize=4,
         error_kw=dict(elinewidth=1.2, ecolor="black"),
     )
- 
+
     bars_critical = ax.bar(
         x + width / 2,
         critical_means,
@@ -421,7 +412,7 @@ def plot_thermal_stress_exposure(
         capsize=4,
         error_kw=dict(elinewidth=1.2, ecolor="black"),
     )
- 
+
     ax.set_xticks(x)
     ax.set_xticklabels(species_labels, fontsize=10)
     ax.set_ylabel("Proportion of timesteps", fontsize=11)
@@ -434,7 +425,7 @@ def plot_thermal_stress_exposure(
     ax.grid(axis="y", alpha=0.25)
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
- 
+
     # Annotate bar values inside bars (avoids overlap with error bars)
     for bar in bars_stress:
         h = bar.get_height()
@@ -462,14 +453,23 @@ def plot_thermal_stress_exposure(
                 color="#333333",
                 fontweight="bold",
             )
- 
+
     # Legend as a patch row below the species tick labels
     from matplotlib.patches import Patch
+
     legend_elements = [
-        Patch(facecolor=DARK_GRAY,  edgecolor="black", linewidth=0.7,
-              label=r"Thermal stress ($T > T_{opt}$)"),
-        Patch(facecolor=LIGHT_GRAY, edgecolor="black", linewidth=0.7,
-              label=r"Critical exposure ($T \geq CT_{max}$)"),
+        Patch(
+            facecolor=DARK_GRAY,
+            edgecolor="black",
+            linewidth=0.7,
+            label=r"Thermal stress ($T > T_{opt}$)",
+        ),
+        Patch(
+            facecolor=LIGHT_GRAY,
+            edgecolor="black",
+            linewidth=0.7,
+            label=r"Critical exposure ($T \geq CT_{max}$)",
+        ),
     ]
     ax.legend(
         handles=legend_elements,
@@ -479,25 +479,19 @@ def plot_thermal_stress_exposure(
         fontsize=10,
         frameon=False,
     )
- 
+
     plt.tight_layout()
     plt.subplots_adjust(bottom=0.18)
- 
+
     path = os.path.join(out_dir, "fig3_thermal_stress_exposure.png")
     plt.savefig(path, dpi=250, bbox_inches="tight")
     plt.close()
     print(f"    Saved: {path}")
-  
+
+
 def compute_mean_dominance_probability(all_results: dict) -> dict:
     """
-    For each species, compute the mean dominance probability P_i across
-    all sites, restricted to sites where that species is the predicted
-    winner (S_hat == sp).
-
-    Returns
-    -------
-    dict : {species_label: mean_P_i_when_dominant}
-        Only species that won at least one site are included.
+    Eq. (20) — Mean dominance probability P_i at sites where species is predicted winner.
     """
     winner_probs: dict[str, list[float]] = {sp: [] for sp in SPECIES_LIST}
 
@@ -520,13 +514,14 @@ def compute_mean_dominance_probability(all_results: dict) -> dict:
 # FIGURE 4 — DOMINANCE PROBABILITY HEATMAP
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 def plot_dominance_heatmap(
     all_results: dict,
     ground_truth: dict,
     out_dir: str,
 ):
     """
-    Main Monte Carlo result figure.
+    Eq. (20) — Species dominance probability P_i heatmap across NCR sites.
     """
 
     # ──────────────────────────────────────────────────────────────────────
@@ -543,11 +538,9 @@ def plot_dominance_heatmap(
     )
 
     for j, site in enumerate(ranked_sites):
-
         dom = site_dominance(all_results[site])
 
         for i, sp in enumerate(SPECIES_LIST):
-
             mat[i, j] = dom["P_i"][sp]
 
     fig, ax = plt.subplots(figsize=(16, 5.5))
@@ -572,10 +565,7 @@ def plot_dominance_heatmap(
     ax.set_yticks(range(len(SPECIES_LIST)))
 
     ax.set_yticklabels(
-        [
-            SPECIES_PARAMS[sp]["label"]
-            for sp in SPECIES_LIST
-        ],
+        [SPECIES_PARAMS[sp]["label"] for sp in SPECIES_LIST],
         fontsize=10,
     )
 
@@ -589,17 +579,12 @@ def plot_dominance_heatmap(
     # Ground-truth markers
     # ──────────────────────────────────────────────────────────────────────
 
-    species_to_idx = {
-        sp: i
-        for i, sp in enumerate(SPECIES_LIST)
-    }
+    species_to_idx = {sp: i for i, sp in enumerate(SPECIES_LIST)}
 
     for j, site in enumerate(ranked_sites):
-
         actual = ground_truth.get(site)
 
         if actual in species_to_idx:
-
             i = species_to_idx[actual]
 
             ax.scatter(
@@ -640,22 +625,20 @@ def plot_dominance_heatmap(
 # FIGURE 4 — SHANNON ENTROPY
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 def plot_shannon_entropy(
     all_results: dict,
     out_dir: str,
 ):
     """
-    Transition-zone uncertainty figure.
+    Eq. (23) — Shannon dominance entropy H across sites (competitive uncertainty).
     """
 
     threshold = math.log(2)
 
     ranked = _temp_sorted_sites(all_results.keys())
 
-    entropies = [
-        site_dominance(all_results[s])["H"]
-        for s in ranked
-    ]
+    entropies = [site_dominance(all_results[s])["H"] for s in ranked]
 
     fig, ax = plt.subplots(figsize=(14, 5))
 
@@ -702,8 +685,8 @@ def plot_shannon_entropy(
     )
 
     for label in ax.get_xticklabels():
-        label.set_ha('right')
-        label.set_rotation_mode('anchor')
+        label.set_ha("right")
+        label.set_rotation_mode("anchor")
 
     ax.legend(frameon=False)
 
@@ -729,12 +712,13 @@ def plot_shannon_entropy(
 # FIGURE 5 — COLLECTIVE ORDER COLLAPSE
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 def plot_collective_order(
     all_ref_records: list[dict],
     out_dir: str,
 ):
     """
-    Mechanistic validation figure.
+    Eq. (18) — Mechanistic validation of collective order Ω vs temperature.
 
     Accepts pooled per-step records from one reference run per site,
     giving full thermal range coverage for Ω vs temperature binning.
@@ -760,20 +744,13 @@ def plot_collective_order(
     all_by = []
 
     for idx, sp in enumerate(SPECIES_LIST):
-
         p = SPECIES_PARAMS[sp]
 
-        T_s = np.array(
-            [r.get(f"mean_T_{sp}", np.nan) for r in all_ref_records]
-        )
+        T_s = np.array([r.get(f"mean_T_{sp}", np.nan) for r in all_ref_records])
 
-        Om_s = np.array(
-            [r[f"omega_{sp}"] for r in all_ref_records]
-        )
+        Om_s = np.array([r[f"omega_{sp}"] for r in all_ref_records])
 
-        N_s = np.array(
-            [r.get(f"n_active_{sp}", 0) for r in all_ref_records]
-        )
+        N_s = np.array([r.get(f"n_active_{sp}", 0) for r in all_ref_records])
 
         MIN_ACTIVE = max(1, round(0.10 * 100))
 
@@ -782,11 +759,9 @@ def plot_collective_order(
         Om_v = Om_s[valid]
 
         if len(T_v) > 10:
-
             bins = np.linspace(T_v.min(), T_v.max(), 25)
 
             for bi in range(len(bins) - 1):
-
                 mask = (T_v >= bins[bi]) & (T_v < bins[bi + 1])
 
                 if mask.sum() >= MIN_BIN_SIZE:
@@ -808,21 +783,14 @@ def plot_collective_order(
     # ──────────────────────────────────────────────────────────────────────
 
     for idx, sp in enumerate(SPECIES_LIST):
-
         p = SPECIES_PARAMS[sp]
         ax = axes[idx]
 
-        T_s = np.array(
-            [r.get(f"mean_T_{sp}", np.nan) for r in all_ref_records]
-        )
+        T_s = np.array([r.get(f"mean_T_{sp}", np.nan) for r in all_ref_records])
 
-        Om_s = np.array(
-            [r[f"omega_{sp}"] for r in all_ref_records]
-        )
+        Om_s = np.array([r[f"omega_{sp}"] for r in all_ref_records])
 
-        N_s = np.array(
-            [r.get(f"n_active_{sp}", 0) for r in all_ref_records]
-        )
+        N_s = np.array([r.get(f"n_active_{sp}", 0) for r in all_ref_records])
 
         MIN_ACTIVE = max(1, round(0.10 * 100))
 
@@ -834,11 +802,9 @@ def plot_collective_order(
         by = []
 
         if len(T_v) > 10:
-
             bins = np.linspace(T_v.min(), T_v.max(), 25)
 
             for bi in range(len(bins) - 1):
-
                 mask = (T_v >= bins[bi]) & (T_v < bins[bi + 1])
 
                 if mask.sum() >= MIN_BIN_SIZE:
@@ -889,7 +855,6 @@ def plot_collective_order(
                 break
 
         if T_col is not None:
-
             ax.axvline(
                 T_col,
                 color="orange",
@@ -898,17 +863,10 @@ def plot_collective_order(
                 label="T_collapse",
             )
 
-            title = (
-                f"{p['label']}\n"
-                f"Tcollapse = {T_col:.1f}°C"
-            )
+            title = f"{p['label']}\nTcollapse = {T_col:.1f}°C"
 
         else:
-
-            title = (
-                f"{p['label']}\n"
-                f"No Collapse Detected"
-            )
+            title = f"{p['label']}\nNo Collapse Detected"
 
         ax.set_title(title, fontsize=10)
         ax.set_xlabel("Temperature (°C)")
@@ -957,13 +915,14 @@ def plot_collective_order(
 # TABLE 1 — SITE VALIDATION SUMMARY
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 def generate_site_summary_table(
     all_results: dict,
     ground_truth: dict,
     out_dir: str = ".",
 ):
     """
-    Main validation table.
+    Section III-G — Site validation table (Eq. 21–22, Eq. 23 entropy).
     """
 
     rows = []
@@ -971,7 +930,6 @@ def generate_site_summary_table(
     _site_idx = _build_site_temp_index()
 
     for site_name, df in all_results.items():
-
         dom = site_dominance(df)
         dom_dict[site_name] = dom
 
@@ -987,7 +945,9 @@ def generate_site_summary_table(
                 "Observed": actual.replace("_", " "),
                 "Predicted": predicted.replace("_", " "),
                 "Entropy H": round(dom["H"], 3),
-                "Match": "✓" if actual.replace("_", " ") == predicted.replace("_", " ") else "✗",
+                "Match": "✓"
+                if actual.replace("_", " ") == predicted.replace("_", " ")
+                else "✗",
             }
         )
 
@@ -1007,10 +967,7 @@ def generate_site_summary_table(
     acc = classification_accuracy(dom_dict, ground_truth)
     n_correct = int(acc * len(all_results))
 
-    print(
-        f"\n  Classification Accuracy:"
-        f" {n_correct}/{len(all_results)} = {acc:.3f}"
-    )
+    print(f"\n  Classification Accuracy: {n_correct}/{len(all_results)} = {acc:.3f}")
 
     print("\n" + "─" * 50)
     print("  Mean Foraging Efficiency (Eᵢ) Across All Sites")
